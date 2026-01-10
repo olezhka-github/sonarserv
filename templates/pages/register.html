@@ -199,7 +199,7 @@
                     }
 
                     // --- Регистрация ---
-                    fetch("http://sonarapiserver.onrender.com/api/register", {
+                    fetch("https://sonarapiserver.onrender.com/api/register", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ username: usrname, password: password,email:email })
@@ -209,7 +209,7 @@
                             if (data.success) {
 
                                 // --- Автоматичний логін після реєстрації ---
-                                fetch("http://sonarapiserver.onrender.com/api/login", {
+                                fetch("https://sonarapiserver.onrender.com/api/login", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ username: usrname, password: password })
@@ -250,3 +250,4 @@
 
 
 </html>
+
