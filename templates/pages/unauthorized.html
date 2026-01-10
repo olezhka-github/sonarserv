@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Доступ Заборонено ( 401 )</title>
+    <style>
+        :root {
+            /* Чорно-біла палітра */
+            --main-bg-color: #000000; /* Чорний фон */
+            --main-text-color: #ffffff; /* Білий текст */
+            --accent-color: #333333; /* Темно-сірий акцент / рамка */
+            --box-bg-color: #1a1a1a; /* Дуже темно-сірий фон блоку */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--main-bg-color);
+            color: var(--main-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; 
+        }
+
+        .container {
+            padding: 50px;
+            border: 2px solid var(--accent-color);
+            border-radius: 0; /* Строгі кути */
+            text-align: center;
+            background-color: var(--box-bg-color);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1); /* Ледь помітне сяйво */
+            max-width: 90%;
+            width: 500px;
+        }
+
+        .icon {
+            font-size: 6rem;
+            color: var(--main-text-color);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--main-text-color);
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .ip-address {
+            font-weight: bold;
+            color: var(--main-bg-color); /* Чорний текст IP */
+            background-color: var(--main-text-color); /* На білому тлі */
+            padding: 5px 12px;
+            border-radius: 0;
+            display: inline-block;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+        
+        a {
+            color: var(--main-text-color);
+            text-decoration: underline;
+            border-bottom: 1px dotted var(--main-text-color);
+            transition: color 0.3s, border-bottom 0.3s;
+        }
+
+        a:hover {
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="icon">
+            <span role="img" aria-label="Заблоковано">✖️</span>
+        </div>
+        <h1>Ви не авторизовані</h1>
+        <p>
+            Ви не ввійшли в систему. Для продовження 
+        </p>
+        <p>
+            <strong>Ваша заблокована адреса:</strong>
+            <span class="ip-address" id="user-ip">192.168.1.100</span>
+        </p>
+        <p>
+            Якщо Ви вважаєте, що це помилка, будь ласка,
+            зверніться до адміністратора сайту для швидкого вирішення проблеми.
+        </p>
+        <a href="mailto:admin@example.com">Зв'язатися з адміністратором</a>
+    </div>
+
+</body>
+</html>

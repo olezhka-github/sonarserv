@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonar — Вхід</title>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/alertify.min.css" />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/themes/default.min.css" />
+
+    <style>
+        * {
+            box-sizing: border-box;
+            /* Головний фікс */
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: linear-gradient(135deg, #161a20, #222833);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            /* про всяк випадок */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 30px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 18px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 34px;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+
+
+        a {
+            color: #007bff;
+            /* Change text color */
+            text-decoration: none;
+            /* Remove default underline */
+            font-weight: bold;
+            /* Make text bold */
+            padding: 5px 10px;
+            /* Add padding around the text */
+            /*background-color: #f8f9fa;  Add a background color */
+            border-radius: 5px;
+            /* Round the corners */
+        }
+
+        .subtitle {
+            text-align: center;
+            color: whitesmoke;
+            opacity: 0.75;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        .input-field {
+            width: 100%;
+            margin-bottom: 18px;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 17px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            outline: none;
+            transition: 0.2s;
+            display: block;
+            /* щоб браузери не робили фігню */
+        }
+
+        .input-field input:focus {
+            border-color: #4a74ff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #4a74ff;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.25s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #3b5fe0;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="title">Sonar</div>
+        <div class="subtitle">Вхід у твій захищений простір</div>
+
+        <div class="input-field">
+            <input type="text" id="usrname" placeholder="Ім'я користувача" required>
+        </div>
+            <div class="input-field">
+            <input type="email" id="email" placeholder="Електронна пошта" required>
+        </div>
+        <div class="input-field">
+            <input type="password" id="password" placeholder="Пароль" required>
+        </div>
+        <a href="/login" id="reg" class="subtitle-href" style="color:white; text-align:center;">Вже маєте акаунт?
+            Ввійдіть тут.</a>
+        <button class="btn" id="getin">Зареєструватись</button>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+
+                function setCookie(name, value) {
+                    const date = new Date();
+                    date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 рік
+                    const expires = "expires=" + date.toUTCString();
+                    document.cookie = `${name}=${value}; ${expires}; path=/; secure; samesite=None`;
+                }
+
+                const getin = document.getElementById('getin');
+
+                function register() {
+                    const usrnameInput = document.getElementById("usrname");
+                    const passwordInput = document.getElementById("password");
+                    const emailInput = document.getElementById("email");
+
+                    const email = emailInput.value.trim();
+                    const usrname = usrnameInput.value.trim();
+                    const password = passwordInput.value.trim();
+
+                    // --- Валідація юзернейма ---
+
+                    function hasSpaceIncludes(str) {
+                        return str.includes(" ");
+                    }
+
+                    const usernameRegex = /^[A-Za-z0-9._\s]+$/;
+
+                    if (!usrname) {
+                        alertify.error("Будь ласка вкажіть ім'я користувача.");
+                        return;
+                    }
+
+                    if (!usernameRegex.test(usrname) || hasSpaceIncludes(usrname)) {
+                        alertify.error("Ім'я користувача може містити лише букви, цифри, крапку та нижнє підкреслення.");
+                        return;
+                    }
+
+                    if (!password) {
+                        alertify.error('Будь ласка вкажіть пароль.');
+                        return;
+                    }
+
+                    if (usrname.length < 3 || usrname.length > 16) {
+                        alertify.error("Ім'я користувача має бути від 3 до 16 символів.");
+                        return;
+                    }
+
+
+                    // --- Захист від пустих значень (якщо поля почищені після trim) ---
+                    if (usrname.length === 0 || password.length === 0) {
+                        alertify.error("Поля не можуть бути порожніми.");
+                        return;
+                    }
+
+                    // --- Регистрация ---
+                    fetch("http://127.0.0.1:5001/api/register", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: usrname, password: password,email:email })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+
+                                // --- Автоматичний логін після реєстрації ---
+                                fetch("http://127.0.0.1:5001/api/login", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ username: usrname, password: password })
+                                })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            setCookie("token", data.token);
+                                            alertify.success("Реєстрація успішна.");
+                                            window.location.href = '/main'
+                                        } else {
+                                            alertify.error("Помилка входу після реєстрації.");
+                                        }
+                                    });
+
+                            } else {
+                                if (data.message === "User exists") {
+                                    alertify.error('Користувач вже існує');
+                                } else if (data.message === "Username does not meet the requirements."){
+                                    alertify.error("Ім'я користувача не відповідає вимогам.");
+
+                                } else {
+                                    alertify.error('Сталась невідома помилка.')
+                                }
+                            }
+                        })
+                        .catch(err => console.error("Fetch error:", err));
+                }
+
+                getin.addEventListener('click', register);
+            });
+
+        </script>
+        <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/alertify.min.js"></script>
+    </div>
+
+</body>
+
+</html>

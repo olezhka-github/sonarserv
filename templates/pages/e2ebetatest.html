@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E2E Чат сонара</title>
+
+
+    <style>
+        body {
+            font-family: Inter, Roboto, Arial, sans-serif;
+            margin: 14px;
+            background: #fafafa;
+            color: #111;
+        }
+
+        header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        #wscstatus {
+            font-weight: 700;
+            color: #0b5;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e3e6ea;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 6px rgba(16, 24, 40, 0.04);
+        }
+
+        #log {
+            height: 320px;
+            overflow: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+            padding: 8px;
+            background: #0f1724;
+            color: #e6edf3;
+            border-radius: 6px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid #d0d7de;
+            min-width: 220px;
+        }
+
+        button {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        footer {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        small.note {
+            color: #666;
+            display: block;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h2 style="margin:0">E2E Encryption — клієнт</h2>
+        <div class="card" style="padding:8px 12px;">
+            <span id="wscstatus">Статус з'єднання WS = (очікування)</span>
+        </div>
+    </header>
+
+    <section class="card" aria-label="controls">
+        <strong>Контроли</strong>
+        <div class="row" style="margin-top:8px;">
+            <input id="wsurl" type="text" value="ws://127.0.0.1:8099" />
+            <button id="btnConnect">Ініціювати WS</button>
+            <button id="btnReloadScript">Перезавантажити /scriptget/Encryption</button>
+        </div>
+
+        <div class="row">
+            <input id="opponentId" type="text" placeholder="ID співрозмовника (наприклад: 999)" />
+            <button id="btnHandshake">Запросити E2E (handshake)</button>
+            <button id="btnUseCookie">Спробувати завантажити ключ з cookie</button>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+            <input id="plainMsg" type="text" placeholder="Текст для шифрування і відправки" style="flex:1;" />
+            <button id="btnSendEnc">Зашифрувати + надіслати</button>
+        </div>
+
+        <small class="note">
+            Примітка: твій скрипт повинен експортувати/доступити деякі функції (наприклад через
+            <code>window.initiate_ws</code> або <code>window.initiate_e2e_handshake</code>) — інакше кнопки спробують
+            викликати функції, яких у глобальному просторі немає.
+        </small>
+    </section>
+
+    <section class="card" style="margin-top:12px;">
+        <strong>Логи (консоль)</strong>
+        <div id="log"></div>
+    </section>
+
+    <footer>
+        <small>Скрипт підвантажується з <code>/scriptget/Encryption</code>. Якщо сервер повертає цей JS — сторінка
+            автоматично його виконає.</small>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- 0. КОНФІГУРАЦІЯ ТА ГЛОБАЛЬНІ ЗМІННІ ---
+
+            // URL для отримання простого числа P. Припустимо, ти його визначив раніше.
+            const NONWSURL = "/api/get-prime-p";
+            let wscstatus = document.getElementById('wscstatus').textContent;
+            function setwsc(value) {
+                wscstatus = 'Статус з`єднання WS = ' + value
+            }
+            // Припустимо, це буде ID користувача, з яким ти спілкуєшся.
+            let currentOpponentId = null;
+
+            // Криптографічні змінні
+            let primeP = null;
+            const generatorG = 2n; // Стандартний генератор для DH
+            let myPrivateKey = null;
+            let myPublicKey = null; // У BigInt форматі
+            let encryptionKey = null; // CryptoKey об'єкт для AES-GCM
+            let ws = null; // WebSocket з'єднання
+
+            // --- 1. КРИПТОГРАФІЧНІ УТИЛІТИ ---
+
+            // Правильне піднесення до степеня по модулю: (base^exp) % mod
+            function modPow(base, exp, mod) {
+                let res = 1n;
+                base = base % mod;
+                while (exp > 0n) {
+                    if (exp % 2n === 1n) res = (res * base) % mod;
+                    exp = exp / 2n;
+                    base = (base * base) % mod;
+                }
+                return res;
+            }
+
+            // Безпечна генерація випадкового великого числа (приватний ключ)
+            function generateSecureRandomBigInt() {
+                const array = new Uint8Array(32); // 256 біт
+                window.crypto.getRandomValues(array);
+                let hex = "0x" + Array.from(array).map(b => b.toString(16).padStart(2, "0")).join("");
+                return BigInt(hex);
+            }
+
+            // Генерація пари ключів (Private + Public)
+            function generateDHKeys() {
+                if (!primeP) { console.error("P не завантажено"); return null; }
+                // 1. Приватний ключ (випадкове число)
+                myPrivateKey = generateSecureRandomBigInt();
+                // 2. Публічний ключ = (g ^ private) % p
+                myPublicKey = modPow(generatorG, myPrivateKey, BigInt(primeP));
+                return myPublicKey.toString();
+            }
+
+            // Обчислення спільного секрету: (opponentPublic ^ myPrivate) % p
+            function computeSharedSecret(opponentPublicKeyStr) {
+                const opponentKeyBigInt = BigInt(opponentPublicKeyStr);
+                // Shared Secret = (Opponent Public Key ^ My Private Key) % P
+                const secret = modPow(opponentKeyBigInt, myPrivateKey, BigInt(primeP));
+                return secret;
+            }
+
+            // Перетворення числа (Secret) в ключ AES-GCM (через SHA-256 хешування)
+            async function deriveAesKey(secretBigInt) {
+                const msgBuffer = new TextEncoder().encode(secretBigInt.toString());
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+
+                return await crypto.subtle.importKey(
+                    'raw',
+                    hashBuffer,
+                    { name: 'AES-GCM' },
+                    false,
+                    ['encrypt', 'decrypt']
+                );
+            }
+
+            // --- 2. МЕНЕДЖЕР КЛЮЧІВ У COOKIE ---
+
+            async function saveKeyToCookie(cryptoKey, opponentId) {
+                if (!cryptoKey || !opponentId) return;
+                try {
+                    const exportedKey = await crypto.subtle.exportKey("jwk", cryptoKey);
+                    const jsonString = JSON.stringify(exportedKey);
+                    const base64Key = btoa(jsonString); // Base64 кодування
+
+                    const cookieName = `${opponentId}-chatkey`;
+                    const date = new Date();
+                    date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
+                    const expires = "expires=" + date.toUTCString();
+
+
+                    document.cookie = `${cookieName}=${base64Key};${expires};path=/;SameSite=Strict`;
+                    console.log(`Ключ E2E збережено в куку: ${cookieName}`);
+                } catch (err) {
+                    console.error("Помилка збереження ключа в куки:", err);
+                }
+            }
+
+            async function loadKeyFromCookie(opponentId) {
+                const cookieName = `${opponentId}-chatkey=`;
+                const decodedCookie = decodeURIComponent(document.cookie);
+                const ca = decodedCookie.split(';');
+
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1);
+                    if (c.indexOf(cookieName) === 0) {
+                        try {
+                            const base64Key = c.substring(cookieName.length, c.length);
+                            const jsonString = atob(base64Key);
+                            const jwk = JSON.parse(jsonString);
+
+                            return await crypto.subtle.importKey(
+                                "jwk",
+                                jwk,
+                                { name: "AES-GCM" },
+                                false,
+                                ["encrypt", "decrypt"]
+                            );
+                        } catch (err) {
+                            console.warn(`Ключ для ${opponentId} недійсний/не відновлено.`);
+                            return null;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            // --- 3. ФУНКЦІЇ ШИФРУВАННЯ/РОЗШИФРУВАННЯ ---
+
+            async function encryptMessage(text) {
+                if (!encryptionKey) {
+                    console.error("E2E ключ відсутній. Неможливо зашифрувати.");
+                    return null;
+                }
+                const encoded = new TextEncoder().encode(text);
+                const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 байт IV
+
+                const encrypted = await crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    encryptionKey,
+                    encoded
+                );
+
+                return {
+                    type: 'encrypted_msg',
+                    payload: Array.from(new Uint8Array(encrypted)), // Перетворити в масив для JSON
+                    iv: Array.from(iv)
+                };
+            }
+
+            async function decryptMessage(ciphertextArray, ivArray) {
+                if (!encryptionKey) return "[E2E Error: No Key]";
+                try {
+                    const decrypted = await crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv: new Uint8Array(ivArray) },
+                        encryptionKey,
+                        new Uint8Array(ciphertextArray)
+                    );
+                    return new TextDecoder().decode(decrypted);
+                } catch (e) {
+                    console.error("Помилка дешифрування:", e);
+                    return "[Помилка дешифрування]";
+                }
+            }
+
+            // --- 4. МЕРЕЖЕВА ЛОГІКА (WebSocket та DH Handshake) ---
+
+            async function asyncGetPnumber() {
+                try {
+                    const res = await fetch(NONWSURL, { method: "GET" });
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const data = await res.json();
+                    return data.number;
+                } catch (err) {
+                    console.error("Помилка запиту P:", err);
+                    return null;
+                }
+            }
+
+            async function initiate_e2e_handshake(ws, opponentId) {
+                console.log(`Початок DH обміну з ID: ${opponentId}`);
+                currentOpponentId = opponentId;
+
+                // 1. Генеруємо та відправляємо свій публічний ключ
+                const myPublicStr = generateDHKeys();
+
+                if (myPublicStr) {
+                    ws.send(JSON.stringify({
+                        type: 'e2e_init',
+                        code: 'mec1', // Пропозиція
+                        initiator_public_key: myPublicStr,
+                        target_id: opponentId // Кому призначений цей запит
+                    }));
+                    console.log("Надіслано публічний ключ. Очікую відповіді...");
+                }
+            }
+
+            function initiate_ws(url) {
+                console.log('started!')
+                if (!url.startsWith("ws")) return;
+
+                ws = new WebSocket(url);
+
+                ws.onopen = function () {
+                    console.log('WS: З\'єднано');
+                    setwsc('З`єднано')
+                }
+
+                ws.onerror = function () {
+                    if (window.location.href) { window.location.href = "/encountered-error?content=Failed%20to%20establish%20WS." }
+                }
+
+                ws.onmessage = async function (event) {
+                    let data;
+                    try {
+                        data = JSON.parse(event.data);
+                    } catch {
+                        console.warn("WS: Отримано не JSON:", event.data);
+                        return;
+                    }
+
+                    switch (data.type) {
+                        // Сервер запитує E2E (ви — Receiver)
+                        case "e2e_init":
+                            // Припускаємо, що сервер передав ID ініціатора
+                            const senderId = data.sender_id || data.initiator_id;
+                            currentOpponentId = senderId;
+
+                            // Спробувати завантажити ключ з куки
+                            let existingKey = await loadKeyFromCookie(senderId);
+                            if (existingKey) {
+                                encryptionKey = existingKey;
+                                console.log("E2E: Використовую збережений ключ!");
+                                return;
+                            }
+
+                            // Якщо ключа немає, генеруємо свій публічний ключ
+                            const myPublicStr = generateDHKeys();
+
+                            if (data.initiator_public_key) {
+                                // Обчислюємо спільний секрет і AES ключ
+                                const secretBN = computeSharedSecret(data.initiator_public_key);
+                                encryptionKey = await deriveAesKey(secretBN);
+
+                                // ЗБЕРІГАННЯ: Зберігаємо ключ у куку
+                                await saveKeyToCookie(encryptionKey, senderId);
+
+                                console.log("E2E встановлено! (Receiver side)");
+                            }
+
+                            // Відправляємо свій публічний ключ назад (відповідь на mec1)
+                            ws.send(JSON.stringify({
+                                type: 'e2e_key_exchange',
+                                code: 'mec1_response',
+                                public_key: myPublicStr,
+                                target_id: senderId
+                            }));
+                            break;
+
+                        // Отримано публічний ключ від співрозмовника (ви — Initiator)
+                        case "e2e_key_exchange":
+                            // Припускаємо, що тут є ID відправника
+                            const receiverId = data.sender_id || currentOpponentId;
+
+                            if (data.code === 'mec1_response' && myPrivateKey) {
+                                const secretBN = computeSharedSecret(data.public_key);
+                                encryptionKey = await deriveAesKey(secretBN);
+
+                                // ЗБЕРІГАННЯ: Зберігаємо ключ у куку
+                                await saveKeyToCookie(encryptionKey, receiverId);
+
+                                console.log("E2E встановлено! (Initiator side)");
+                            }
+                            // Можна надіслати підтвердження: ws.send(JSON.stringify({ type: 'e2e_finalize', code: 'mec2' }));
+                            break;
+
+                        // Отримання зашифрованого повідомлення
+                        case "encrypted_msg":
+                            if (encryptionKey) {
+                                const decryptedText = await decryptMessage(data.payload, data.iv);
+                                console.log("Розшифровано:", decryptedText);
+                                // ТУТ ВАШ КОД ВІДОБРАЖЕННЯ
+                            }
+                            break;
+
+                        default:
+                            console.log("Отримано невідоме повідомлення:", data);
+                    }
+                };
+            }
+
+            // --- 5. ІНІЦІАЛІЗАЦІЯ ---
+
+            // 1. Завантажуємо просте число P
+            (async () => {
+                primeP = await asyncGetPnumber();
+                if (primeP) {
+                    console.log("Prime P завантажено.");
+                    // 2. Тепер, коли P є, можна ініціювати WS
+                    const btnConnect = document.getElementById('btnConnect');
+                    let connField;
+
+                    btnConnect.addEventListener('click', function () {
+                        connField = document.getElementById('wsurl').value.trim();
+                        initiate_ws('connField');
+                    })
+
+                    // Приклад використання функції initiate_e2e_handshake
+                    // initiate_e2e_handshake(ws, "ID_Співрозмовника_123"); 
+
+                    // ПРИКЛАД: Спроба завантажити ключ при старті чату з ID 999
+                    // encryptionKey = await loadKeyFromCookie("999");
+                } else {
+                    if (window.location.href) {
+                        //window.location.href = '/encountered-error?content=LINE%20307'
+
+
+                    }
+                }
+            })();
+        });
+
+
+        // потім видалити
+
+
+
+    </script>
+
+</body>
+
+</html>

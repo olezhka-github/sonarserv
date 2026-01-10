@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonar — Вхід</title>
+
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/alertify.min.css" />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/themes/default.min.css" />
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-gradient);
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Анімовані сфери */
+        .orb {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            animation: float 15s infinite alternate;
+        }
+        .orb-1 { background: var(--primary); top: -50px; left: -50px; }
+        .orb-2 { background: var(--secondary); bottom: -50px; right: -50px; animation-delay: -7s; }
+
+        @keyframes float {
+            from { transform: translate(0, 0); }
+            to { transform: translate(40px, 40px); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 50px 40px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .title {
+            text-align: center;
+            font-size: 38px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 15px;
+            margin-bottom: 35px;
+        }
+
+        .input-field {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 15px 18px;
+            font-size: 16px;
+            border-radius: 14px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field input:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .toggle-pass {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.2s;
+        }
+        .toggle-pass:hover { opacity: 1; }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .footer-link {
+            display: block;
+            margin-top: 25px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 14px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .footer-link:hover { color: #fff; }
+        .footer-link span { color: var(--primary); font-weight: 600; }
+    </style>
+</head>
+
+<body>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="container">
+        <div class="title">Sonar</div>
+        <div class="subtitle">Вітаємо з поверненням!</div>
+
+        <div class="input-field">
+            <input type="text" id="username" placeholder="Ім'я користувача" autocomplete="off">
+        </div>
+
+        <div class="input-field">
+            <input type="password" id="password" placeholder="Пароль">
+            <span class="toggle-pass" id="togglePass">👁️</span>
+        </div>
+
+        <button class="btn" id="loginBtn">Увійти в систему</button>
+
+        <a href="/register" class="footer-link">Немає акаунта? <span>Зареєструватися</span></a>
+    </div>
+
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/alertify.min.js"></script>
+    <script>
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+        const loginBtn = document.getElementById("loginBtn");
+        const togglePass = document.getElementById("togglePass");
+
+        // Налаштування Alertify
+        alertify.set('notifier','position', 'top-right');
+
+        // Перевірка сесії
+        fetch("http://127.0.0.1:5001/api/me", { credentials: "include" })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) window.location.href = "/main";
+            }).catch(() => { });
+
+        document.addEventListener("keydown", e => {
+            if (e.key === "Enter") loginBtn.click();
+        });
+
+        togglePass.addEventListener("click", () => {
+            const isPass = passwordInput.type === "password";
+            passwordInput.type = isPass ? "text" : "password";
+            togglePass.textContent = isPass ? "🔒" : "👁️";
+        });
+
+        loginBtn.addEventListener("click", () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                alertify.error("Заповніть всі поля");
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = "Авторизація...";
+
+            fetch("http://127.0.0.1:5001/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alertify.success("Доступ дозволено");
+                    setTimeout(() => window.location.href = "/main", 500);
+                } else {
+                    if (data.err === "wrong_pass") alertify.error("Невірний пароль");
+                    else if (data.err === "user_not_found") alertify.error("Користувача не існує");
+                    else if (data.sonarcode === "IAR002") alertify.error("Підтвердіть пошту для входу.")
+                    else alertify.error("Помилка входу");
+                }
+            })
+            .catch(() => alertify.error("Сервер недоступний"))
+            .finally(() => {
+                loginBtn.disabled = false;
+                loginBtn.textContent = "Увійти в систему";
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Помилка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .error-container {
+            background: #121212;
+            border: 1px solid #1f1f1f;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .error-icon {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ff6b6b;
+        }
+
+        .error-subtitle {
+            font-size: 16px;
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .error-details {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .error-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .error-content {
+            font-size: 14px;
+            color: #e0e0e0;
+            word-break: break-word;
+            line-height: 1.6;
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .error-request {
+            font-size: 14px;
+            color: #888;
+            word-break: break-word;
+            line-height: 1.6;
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #e0e0e0;
+            color: #0a0a0a;
+        }
+
+        .btn-primary:hover {
+            background: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #1f1f1f;
+            color: #e0e0e0;
+            border: 1px solid #2a2a2a;
+        }
+
+        .btn-secondary:hover {
+            background: #2a2a2a;
+            transform: translateY(-2px);
+        }
+
+        .timestamp {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 30px 20px;
+            }
+
+            .error-title {
+                font-size: 24px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <div class="error-title">Виникла помилка</div>
+        <div class="error-subtitle">Під час виконання запиту сталася помилка</div>
+
+        <div class="error-details">
+            <div class="error-label">Повідомлення помилки</div>
+            <div class="error-content" id="errorContent">Завантаження...</div>
+
+            <div class="error-label">Запит</div>
+            <div class="error-request" id="errorRequest">Завантаження...</div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="goHome()">Повернутися на головну</button>
+            <button class="btn btn-secondary" onclick="copyError()">Скопіювати помилку</button>
+        </div>
+
+        <div class="timestamp" id="timestamp"></div>
+    </div>
+
+    <script>
+        // Отримуємо параметри з URL
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                content: params.get('content') || 'Невідома помилка',
+                request: params.get('request') || 'null'
+            };
+        }
+
+        // Ініціалізація сторінки
+        function init() {
+            const params = getUrlParams();
+            
+            // Декодуємо URL-encoded параметри
+            const errorContent = decodeURIComponent(params.content.replace(/\+/g, ' '));
+            const errorRequest = decodeURIComponent(params.request.replace(/\+/g, ' '));
+
+            // Відображаємо дані
+            document.getElementById('errorContent').textContent = errorContent;
+            document.getElementById('errorRequest').textContent = errorRequest === 'null' ? 'Не вказано' : errorRequest;
+
+            // Відображаємо час помилки
+            const now = new Date();
+            document.getElementById('timestamp').textContent = 
+                `Помилка зафіксована: ${now.toLocaleString('uk-UA')}`;
+        }
+
+        // Повернутися на головну
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        // Скопіювати помилку
+        function copyError() {
+            const params = getUrlParams();
+            const errorText = `
+=== SONAR CHAT ERROR ===
+Час: ${new Date().toLocaleString('uk-UA')}
+Помилка: ${decodeURIComponent(params.content.replace(/\+/g, ' '))}
+Запит: ${decodeURIComponent(params.request.replace(/\+/g, ' '))}
+=====================
+            `.trim();
+
+            navigator.clipboard.writeText(errorText).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Скопійовано!';
+                btn.style.background = '#2a8a4a';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('Не вдалося скопіювати: ' + err);
+            });
+        }
+
+        // Запуск при завантаженні
+        init();
+    </script>
+</body>
+
+</html>

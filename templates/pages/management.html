@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonar — Керування акаунтом</title>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/alertify.min.css" />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/themes/default.min.css" />
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+        
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-gradient);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        /* Регiональна плашка зверху */
+        .region-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #ef4444;
+            color: #fff;
+            text-align: center;
+            padding: 8px 0;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        .container {
+            width: 85vw;
+            height: 85vh;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.2);
+            border-right: 1px solid var(--glass-border);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 24px;
+            margin: 0 0 30px 15px;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-item {
+            padding: 14px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: 0.3s;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            border-left: 4px solid var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 60px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .content-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h3 { font-size: 28px; margin-top: 0; margin-bottom: 30px; }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: #fff;
+            outline: none;
+        }
+
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .switch {
+            width: 44px; height: 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .switch::before {
+            content: '';
+            position: absolute;
+            width: 18px; height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            top: 3px; left: 3px;
+            transition: 0.3s;
+        }
+
+        .switch.on { background: var(--primary); }
+        .switch.on::before { left: 23px; }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none; padding: 14px 28px; color: #fff; border-radius: 12px;
+            font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 20px;
+        }
+
+        .btn-danger {
+            background: transparent; border: 1px solid var(--danger);
+            color: var(--danger); padding: 12px 24px; border-radius: 12px;
+            cursor: pointer; transition: 0.3s;
+        }
+
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="region-banner">
+        Sonar доступний лише у Львівській, Тернопільській області та у місті Київ
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="nav-item active" onclick="showSection('profile')">Профіль</div>
+            <div class="nav-item" onclick="showSection('privacy')">Приватність</div>
+            <div class="nav-item" onclick="showSection('interface')">Інтерфейс</div>
+            <div class="nav-item" onclick="showSection('sessions')">Сесії</div>
+            
+            <div style="margin-top: auto;">
+                <div class="nav-item" style="color: var(--danger);" onclick="deleteAccount()">⚠️ Видалити акаунт</div>
+                <a href="/main" style="text-decoration: none;"><div class="nav-item">⬅️ Назад до чатів</div></a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div id="profile" class="content-section active">
+                <h3 id="dom-username">Мій Профіль</h3>
+                <div class="settings-grid">
+                    <div class="card">
+                        <div class="input-group">
+                            <label>Публічне ім'я</label>
+                            <input type="text" id="display-name" placeholder="Як вас бачать інші">
+                        </div>
+                        <div class="input-group">
+                            <label>Про себе (Bio)</label>
+                            <textarea id="bio" rows="4" placeholder="Напишіть щось цікаве..."></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Дата створення акаунта</label>
+                            <input type="text" placeholder="01.01.2026" disabled>
+                        </div>
+                        <div class="input-group">
+                            <label>Контрольне число</label>
+                            <input type="text" placeholder="12345" disabled>
+                        </div>
+                        <div class="input-group toggle-row">
+                            <label>ORSM режим</label>
+                            <div class="switch" onclick="this.classList.toggle('on')"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="input-group">
+                            <label>Місто</label>
+                            <input type="text" id="location" placeholder="Наприклад: Київ, Україна">
+                        </div>
+                        <div class="input-group">
+                            <label>Веб-сайт або соцмережі</label>
+                            <input type="text" id="website" placeholder="https://...">
+                        </div>
+                        <button class="btn-save" onclick="saveProfile()">Зберегти зміни</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="privacy" class="content-section">
+                <h3>Приватність та безпека</h3>
+                <div class="settings-grid">
+                    <div class="card">
+                        <div class="input-group">
+                            <label>Хто може бачити мій статус?</label>
+                            <select>
+                                <option>Усі</option>
+                                <option>Тільки контакти</option>
+                                <option>Ніхто</option>
+                            </select>
+                        </div>
+                        <div class="toggle-row">
+                            <div>
+                                <div style="font-weight: 600;">Звіти про прочитання</div>
+                                <div style="font-size: 13px; color: #94a3b8;">Інші не побачать, чи прочитали ви повідомлення</div>
+                            </div>
+                            <div class="switch on" onclick="this.classList.toggle('on')"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div style="font-weight: 600; margin-bottom: 10px;">Двофакторна автентифікація</div>
+                        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Захистіть свій акаунт додатковим кодом підтвердження.</p>
+                        <button class="btn-save" style="background: rgba(255,255,255,0.1); border: 1px solid var(--primary);">Налаштувати 2FA</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="interface" class="content-section">
+                <h3>Зовнішній вигляд</h3>
+                <div class="settings-grid">
+                    <div class="card">
+                        <label style="display: block; margin-bottom: 15px;">Колірна схема</label>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="width: 40px; height: 40px; background: #6366f1; border-radius: 50%; cursor: pointer; border: 2px solid #fff;"></div>
+                            <div style="width: 40px; height: 40px; background: #ec4899; border-radius: 50%; cursor: pointer;"></div>
+                            <div style="width: 40px; height: 40px; background: #22c55e; border-radius: 50%; cursor: pointer;"></div>
+                            <div style="width: 40px; height: 40px; background: #f59e0b; border-radius: 50%; cursor: pointer;"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="input-group">
+                            <label>Шрифт інтерфейсу</label>
+                            <select id="font-family">
+                                <option>Inter (Default)</option>
+                                <option>Roboto</option>
+                                <option>Monospace</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sessions" class="content-section">
+                <h3>Активні сесії</h3>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--glass-border);">
+                        <div>
+                            <div style="font-weight: 600;">Chrome on Windows 11</div>
+                            <div style="font-size: 12px; color: var(--success);">Поточна сесія • 127.0.0.1</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
+                        <div>
+                            <div style="font-weight: 600;">iPhone 13 Pro</div>
+                            <div style="font-size: 12px; color: #94a3b8;">Останній вхід: 2 години тому • 192.168.0.1</div>
+                        </div>
+                        <button class="btn-danger" style="padding: 6px 12px; font-size: 12px;">Завершити</button>
+                    </div>
+                    <button class="btn-danger" style="width: 100%; margin-top: 20px;">Вийти з усіх інших пристроїв</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/scriptget/Management"></script>
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/alertify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cash-dom@8/dist/cash.min.js"></script>
+    <script>
+        function showSection(id) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function saveProfile() {
+            const bio = document.getElementById('bio').value;
+            const location = document.getElementById('location').value;
+            alertify.success("Профіль успішно оновлено!");
+        }
+
+        function deleteAccount() {
+            alertify.confirm("Видалення", "Це назавжди видалить ваші дані. Продовжити?", 
+            () => alertify.error("Дія скасована"), 
+            () => alertify.message("Безпека понад усе"));
+        }
+    </script>
+</body>
+</html>

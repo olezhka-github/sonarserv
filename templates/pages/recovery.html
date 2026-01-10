@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Відновлення доступу</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-gradient);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Анімовані фонові кола */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: var(--primary);
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            animation: float 10s infinite alternate;
+        }
+
+        body::after {
+            background: var(--secondary);
+            right: 10%;
+            bottom: 10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            from { transform: translate(0, 0); }
+            to { transform: translate(50px, 50px); }
+        }
+
+        .container {
+            display: flex;
+            width: 850px;
+            max-width: 95%;
+            min-height: 500px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(225deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .visual-element {
+            font-size: 80px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px var(--primary));
+        }
+
+        .left-panel h2 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .left-panel p {
+            color: #94a3b8;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .right-panel {
+            flex: 1.2;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .field {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .field label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 500;
+            padding-left: 4px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .field input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .status-msg {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; width: 400px; }
+            .left-panel { padding: 30px; }
+            .right-panel { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="visual-element">🔐</div>
+            <h2>Безпека перш за все</h2>
+            <p>Використовуйте надійний пароль, що містить цифри та спеціальні символи для кращого захисту.</p>
+        </div>
+
+        <div class="right-panel">
+            <div class="field">
+                <label>Ім'я користувача</label>
+                <input type="text" placeholder="Ваш username" id="usrname" autocomplete="off">
+            </div>
+
+            <div class="field">
+                <label>Поточний пароль</label>
+                <input type="password" placeholder="••••••••" id="oldpass">
+            </div>
+
+            <div class="field">
+                <label>Новий пароль</label>
+                <input type="password" placeholder="Придумайте новий" id="newpass">
+            </div>
+
+            <button class="btn" id="submit">Оновити пароль</button>
+            <div id="status" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const submit = document.getElementById("submit");
+            const statusDiv = document.getElementById("status");
+
+            submit.addEventListener('click', async function() {
+                const usrname = document.getElementById("usrname").value.trim();
+                const newpass = document.getElementById("newpass").value.trim();
+                const oldpass = document.getElementById("oldpass").value.trim();
+
+                if(!usrname || !newpass || !oldpass) {
+                    showStatus("Будь ласка, заповніть усі поля", "#f87171");
+                    return;
+                }
+
+                statusDiv.innerText = "Обробка...";
+                
+                try {
+                    const response = await fetch("http://127.0.0.1:5001/accountrecovery", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            "act": "changing_password",
+                            "username": usrname,
+                            "newpassword": newpass,
+                            "oldpassword": oldpass
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showStatus("✅ Пароль успішно змінено!", "#4ade80");
+                    } else {
+                        showStatus("❌ " + (data.message || "Помилка"), "#f87171");
+                    }
+                } catch (error) {
+                    showStatus("❌ Не вдалося з'єднатися з сервером", "#f87171");
+                    console.error(error);
+                }
+            });
+
+            function showStatus(msg, color) {
+                statusDiv.innerText = msg;
+                statusDiv.style.color = color;
+            }
+        });
+    </script>
+</body>
+</html>
