@@ -15,9 +15,10 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Конфігурація з .env
-BANS_DB = os.getenv("BANS_DB_NAME", "bans.db")
-SECRET = os.getenv("FLASK_SECRET", "PRODUCTION_SECRET_KEY_HERE")
-PNUM = os.getenv("PNUM", "0")
+BANS_DB = os.getenv("BANS_DB_NAME", None)
+SECRET = os.getenv("FLASK_SECRET", None)
+PNUM = 255617000
+
 
 app = Flask(__name__)
 
