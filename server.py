@@ -30,7 +30,8 @@ INTERNAL_URL = os.getenv("INTERNAL_DATABASE_URL")
 DATABASE_URL = os.getenv("DATABASE_URL", INTERNAL_URL)
 SECRET = os.getenv("FLASK_SECRET")
 BASE_URL = os.getenv("BASE_URL")
-PNUM = int(os.getenv("PNUM"))
+PNUM = 255617000
+
 
 # Mailjet Config
 MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
@@ -443,4 +444,5 @@ if __name__ == "__main__":
     from waitress import serve
     logger.info("Starting API Server with Waitress on port 5001...")
     # Обов'язково вкажіть threads, оскільки Postgres блокує з'єднання
+
     serve(app, host="0.0.0.0", port=5001, threads=4)
