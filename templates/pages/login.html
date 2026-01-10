@@ -196,7 +196,7 @@
         alertify.set('notifier','position', 'top-right');
 
         // Перевірка сесії
-        fetch("http://127.0.0.1:5001/api/me", { credentials: "include" })
+        fetch("https://127.0.0.1:5001/api/me", { credentials: "include" })
             .then(r => r.json())
             .then(data => {
                 if (data.success) window.location.href = "/main";
@@ -250,4 +250,5 @@
         });
     </script>
 </body>
+
 </html>
