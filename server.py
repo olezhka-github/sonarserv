@@ -87,7 +87,7 @@ def init_dbs():
                     last_online BIGINT DEFAULT 0,
                     created_at BIGINT DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT),
                     profile_data TEXT DEFAULT '{}',
-                    is_banned INTEGER DEFAULT 0,
+                    is_banned INTEGER DEFAULT 0
                 );
                 """)
                 # Chats
@@ -380,6 +380,7 @@ def create_chat():
         with get_db_connection() as con:
             with con.cursor() as cur:
                 cur.execute("SELECT id FROM chats WHERE participants = %s", (participants_json,))
+
                 existing = cur.fetchone()
                 
                 if existing:
@@ -448,4 +449,5 @@ if __name__ == "__main__":
     # Обов'язково вкажіть threads, оскільки Postgres блокує з'єднання
 
     serve(app, host="0.0.0.0", port=5001, threads=4)
+
 
