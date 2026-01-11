@@ -50,7 +50,9 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:51011", 
     "http://localhost:51011", 
     "http://localhost:3000", 
-    "http://localhost:5001"
+    "http://localhost:5001",
+    "https://sonarserv.onrender.com",
+    "https://sonarserv.onrender.com/"
 ]
 
 CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, 
@@ -446,3 +448,4 @@ if __name__ == "__main__":
     # Обов'язково вкажіть threads, оскільки Postgres блокує з'єднання
 
     serve(app, host="0.0.0.0", port=5001, threads=4)
+
