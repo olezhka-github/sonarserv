@@ -11,7 +11,9 @@ from functools import wraps
 from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from dotenv import load_dotenv
-from mailjet_rest import Client
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # -------------------------
 # CONFIG & LOGGING
@@ -26,22 +28,28 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Змінні середовища
-INTERNAL_URL = os.getenv("INTERNAL_DATABASE_URL")
-DATABASE_URL = os.getenv("DATABASE_URL", INTERNAL_URL)
+DATABASE_URL = os.getenv("INTERNAL_DATABASE_URL")
+INTERNAL_URL = os.getenv("DATABASE_URL", DATABASE_URL)
 SECRET = os.getenv("FLASK_SECRET")
 BASE_URL = os.getenv("BASE_URL")
-PNUM = 255617000
-
-
+PNUM = int(os.getenv("PNUM"))
+GMAIL_USER = os.getenv("GMAIL_EMAIL")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 # Mailjet Config
-MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
-MAILJET_API_SECRET = os.getenv("MAILJET_API_SECRET")
+
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 
 # Перевірка критичних змінних
-if not all([DATABASE_URL, SECRET, MAILJET_API_KEY, MAILJET_API_SECRET, SENDER_EMAIL]):
+if not all([DATABASE_URL, SECRET]):
     logger.critical("Missing essential environment variables! Check .env")
     exit(1)
+    
+
+
+if not all([GMAIL_USER, GMAIL_APP_PASSWORD]):
+    logger.critical("Missing Gmail credentials in .env")
+    exit(1)
+
 
 app = Flask(__name__)
 
@@ -51,7 +59,6 @@ ALLOWED_ORIGINS = [
     "http://localhost:51011", 
     "http://localhost:3000", 
     "http://localhost:5001",
-    "https://sonarserv.onrender.com",
     "https://sonarserv.onrender.com/"
 ]
 
@@ -87,7 +94,7 @@ def init_dbs():
                     last_online BIGINT DEFAULT 0,
                     created_at BIGINT DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT),
                     profile_data TEXT DEFAULT '{}',
-                    is_banned INTEGER DEFAULT 0
+                    is_banned INTEGER DEFAULT 0,
                 );
                 """)
                 # Chats
@@ -123,28 +130,29 @@ init_dbs()
 # -------------------------
 def send_verification_email(email: str, token: str):
     try:
-        mailjet = Client(auth=(MAILJET_API_KEY, MAILJET_API_SECRET), version='v3.1')
         verification_link = f"{BASE_URL}/api/verify-email?token={token}"
-        
-        data = {
-          'Messages': [
-            {
-              "From": {"Email": SENDER_EMAIL, "Name": "Service Auth"},
-              "To": [{"Email": email, "Name": "User"}],
-              "Subject": "Verify your email",
-              "HTMLPart": f"<h3>Welcome!</h3><br/>Click here to verify: <a href='{verification_link}'>VERIFY EMAIL</a>",
-              "TextPart": f"Verification Link: {verification_link}"
-            }
-          ]
-        }
-        result = mailjet.send.create(data=data)
-        if result.status_code != 200:
-            logger.error(f"Mailjet Error: {result.json()}")
-        else:
-            logger.info(f"Email sent to {email}")
+
+        # Створюємо лист
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Verify your email"
+        msg['From'] = GMAIL_USER
+        msg['To'] = email
+
+        html = f"<h3>Welcome!</h3><br/>Click here to verify: <a href='{verification_link}'>VERIFY EMAIL</a>"
+        text = f"Verification Link: {verification_link}"
+
+        msg.attach(MIMEText(text, 'plain'))
+        msg.attach(MIMEText(html, 'html'))
+
+        # Підключаємося до Gmail SMTP
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.sendmail(GMAIL_USER, email, msg.as_string())
+
+        logger.info(f"Email sent to {email}")
     except Exception as e:
         logger.error(f"Email sending failed: {e}")
-
+        
 # -------------------------
 # UTILS & MIDDLEWARE
 # -------------------------
@@ -239,6 +247,9 @@ def register():
         "type": "verification",
         "exp": datetime.now(timezone.utc) + timedelta(hours=24)
     }, SECRET, algorithm="HS256")
+    
+    if isinstance(verification_token, bytes):
+        verification_token = verification_token.decode('utf-8')
     
     send_verification_email(email, verification_token)
     
@@ -380,7 +391,6 @@ def create_chat():
         with get_db_connection() as con:
             with con.cursor() as cur:
                 cur.execute("SELECT id FROM chats WHERE participants = %s", (participants_json,))
-
                 existing = cur.fetchone()
                 
                 if existing:
@@ -447,7 +457,4 @@ if __name__ == "__main__":
     from waitress import serve
     logger.info("Starting API Server with Waitress on port 5001...")
     # Обов'язково вкажіть threads, оскільки Postgres блокує з'єднання
-
     serve(app, host="0.0.0.0", port=5001, threads=4)
-
-
