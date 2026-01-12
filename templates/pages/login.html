@@ -196,7 +196,7 @@
         alertify.set('notifier','position', 'top-right');
 
         // Перевірка сесії
-        fetch("https://127.0.0.1:5001/api/me", { credentials: "include" })
+        fetch("https://sonarapiserver.onrender.com/api/me", { credentials: "include" })
             .then(r => r.json())
             .then(data => {
                 if (data.success) window.location.href = "/main";
@@ -224,7 +224,7 @@
             loginBtn.disabled = true;
             loginBtn.textContent = "Авторизація...";
 
-            fetch("http://127.0.0.1:5001/api/login", {
+            fetch("http://sonarapiserver.onrender.com/api/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -252,3 +252,4 @@
 </body>
 
 </html>
+
